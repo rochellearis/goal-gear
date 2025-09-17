@@ -1,8 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
 <h1>{{ app_name }}</h1>
 
 <h5>NPM: </h5>
 <p>{{ npm }}</p>
-<h5>Name: </h5>
-<p>{{ name }}<p>
-<h5>Class: </h5>
+
+<h5>Name:</h5>
+<p>{{ name }}</p>
+
+<h5>Class:</h5>
 <p>{{ class }}</p>
+
+<a href="{% url 'main:create_product' %}">
+  <button>+ Add Product</button>
+</a>
+
+<hr>
+
+{% if not product_list %}
+<p>Belum ada data produk pada Goal Gear.</p>
+{% else %}
+
+{% for product in product_list %}
+<div>
+  <h2><a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a></h2>
+
+  <p><b>{{ product.category }}</b>
+  {% if product.is_featured %} | <b>Featured</b>{% endif %} 
+  | Price: Rp{{ product.price }}
+  | Stock: {{ product.stock }}
+  {% if product.brand %} | Brand: {{ product.brand }}{% endif %}
+  {% if product.rating %} | Rating: {{ product.rating }}{% endif %}
+  </p>
+
+  {% if product.thumbnail %}
+  <img src="{{ product.thumbnail }}" alt="thumbnail" width="150" height="100">
+  <br />
+  {% endif %}
+
+  <p>{{ product.description|truncatewords:25 }}...</p>
+
+  <p><a href="{% url 'main:show_product' product.id %}"><button>View Details</button></a></p>
+</div>
+
+<hr>
+{% endfor %}
+
+{% endif %}
+{% endblock content %}
