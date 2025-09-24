@@ -281,3 +281,195 @@ Tanpa token, server tidak dapat membedakan apakah permintaan yang memakai kreden
 Penjelasan yang diberikan asdos di website PBP sangat jelas dan runtut sehingga alur pengerjaan tutorial 2 mudah dipahami. Dengan adanya panduan tersebut, proses implementasi mulai dari pembuatan model, form, views, hingga routing dapat diikuti dengan baik tanpa banyak kebingungan.
 
 </details>
+
+---
+
+<details>
+<Summary><b>Tugas 4</b></Summary>
+
+## Django AuthenticationForm
+`AuthenticationForm` adalah form bawaan Django yang digunakan untuk proses login. Form ini berada di modul django.contrib.auth.forms dan sudah terintegrasi dengan sistem autentikasi Django.
+
+Secara default, `AuthenticationForm` memiliki dua field utama:
+`username`
+`password`
+
+Saat form divalidasi, Django otomatis mengecek apakah kombinasi username dan password cocok dengan data user yang tersimpan di database (`User` model). Kalau benar, form menghasilkan objek user yang valid, kalau salah akan mengembalikan error.
+
+**Kelebihan `AuthenticationForm`**
+1. Built-in & Terintegrasi: tidak perlu membuat form login dari nol, karena sudah disediakan oleh Django dan langsung terhubung ke sistem autentikasi (`django.contrib.auth`).
+2. Validasi Otomatis: secara otomatis memvalidasi apakah username dan password benar, dan apakah akun aktif.
+3. Error Handling Siap Pakai: memberikan pesan error standar (misalnya "username atau password salah") yang bisa ditampilkan di template.
+4. Keamanan Tinggi: password otomatis dicek menggunakan hash (Django tidak menyimpan password plain text), sehingga lebih aman.
+5. Mudah Dikustomisasi: bisa di-extend untuk menambahkan field tambahan (misalnya "remember me") atau mengubah tampilan error message.
+
+**Kekurangan `AuthenticationForm`**
+1. Terbatas pada Field Default: hanya mendukung username dan password. Jika aplikasi ingin login dengan email atau nomor HP, harus dimodifikasi.
+2. Pesan Error Generik: pesan error standar mungkin terlalu sederhana untuk kebutuhan tertentu, sehingga sering perlu dikustomisasi.
+3. Kurang Fleksibel untuk UI Kompleks: kalau UI butuh login modern (misalnya AJAX login, OTP, social login), form ini biasanya tidak cukup dan harus dibuat form khusus.
+4. Tidak Ada "Remember Me": secara default tidak ada opsi untuk mengatur session agar tetap aktif setelah browser ditutup.
+
+---
+
+## Perbedaan antara autentikasi dan otorisasi
+
+**Autentikasi (Authentication)**
+Proses memverifikasi identitas pengguna, apakah benar dia adalah siapa yang dia klaim.
+Contoh: user memasukkan username dan password, lalu sistem mengecek apakah cocok dengan database.
+Pertanyaan yang dijawab: "Siapa kamu?"
+
+**Otorisasi (Authorization)**
+Proses menentukan hak akses user setelah berhasil terautentikasi.
+Contoh: admin bisa menghapus produk, tetapi user biasa hanya bisa melihat produk.
+Pertanyaan yang dijawab: "Apa yang boleh kamu lakukan?"
+
+**Implementasi di Django**
+1. Autentikasi di Django
+Django menyediakan sistem autentikasi bawaan melalui `django.contrib.auth`.
+    Model User: representasi pengguna (username, password, email, dll).
+    Login: pakai `django.contrib.auth.authenticate()` dan `login()` untuk memverifikasi user dan menyimpannya dalam session.
+    Logout: `pakai django.contrib.auth.logout()`.
+    Form Bawaan: `AuthenticationForm`, `UserCreationForm`.
+    Middleware: `AuthenticationMiddleware` menambahkan atribut `request.user` untuk setiap request.
+
+Contoh:
+```
+from django.contrib.auth import authenticate, login
+
+user = authenticate(request, username='rochelle', password='12345')
+if user is not None:
+    login(request, user)  # simpan user di session
+```
+
+2. Otorisasi di Django
+Setelah user terautentikasi, Django mengecek izin user:
+    Permissions: tiap model bisa punya izin (`add`, `change`, `delete`, `view`).
+    Groups: kumpulan permissions yang bisa diberikan ke banyak user sekaligus.
+    Decorators:
+    `@login_required`: hanya user login yang bisa mengakses.
+    `@permission_required('app_name.permission_code')`: hanya user dengan izin tertentu yang bisa mengakses.
+    `@user_passes_test(lambda u: u.is_superuser)`: custom check.
+
+Contoh:
+```
+from django.contrib.auth.decorators import login_required, permission_required
+
+@login_required
+def dashboard(request):
+    return HttpResponse("Welcome, only logged in users can see this.")
+
+@permission_required('main.delete_product')
+def delete_product(request, product_id):
+    # hanya user dengan izin delete_product yang bisa mengakses
+    ...
+```
+
+---
+
+## Kelebihan dan kekurangan session dan cookie dalam konteks menyimpan state di aplikasi web
+
+Dalam konteks menyimpan state di aplikasi web, session dan cookies memiliki perbedaan kelebihan dan kekurangan masing-masing.
+
+Cookies menyimpan data/state langsung di sisi klien (browser). Kelebihannya, cookies sederhana, mudah digunakan, dan memungkinkan data tertentu tetap tersimpan meskipun pengguna menutup browser (persistent cookies). Namun, kekurangannya adalah kapasitas penyimpanan sangat terbatas (umumnya hanya beberapa KB per cookie), mudah dimodifikasi atau dibaca oleh pengguna, serta berisiko terhadap serangan seperti cookie theft jika tidak diamankan dengan baik (misalnya tanpa `HttpOnly` atau `Secure`).
+
+Session, sebaliknya, menyimpan data/state di sisi server, sementara browser hanya menyimpan sebuah session ID dalam cookie. Kelebihannya, data lebih aman karena tidak langsung terlihat atau bisa diubah oleh pengguna, serta kapasitas penyimpanan bergantung pada server, bukan browser. Kekurangannya, session membebani server karena harus menyimpan data semua pengguna yang aktif, dan session biasanya hilang ketika pengguna menutup browser kecuali diatur agar lebih lama (persistent session).
+
+Singkatnya, cookies lebih ringan tapi kurang aman, sedangkan session lebih aman tapi bisa membebani server.
+
+---
+
+## Apakah cookies aman secara default, apakah ada risiko potensial yang harus diwaspadai? Penanganan Django mengenai hal tersebut
+
+**Apakah cookies aman secara default?**
+Tidak sepenuhnya. Cookie standar adalah data yang disimpan di browser dan dikirim ke server pada tiap request, secara default browser tidak mengenakan proteksi tambahan. Jadi tanpa konfigurasi keamanan, cookie rentan terhadap serangan seperti XSS (pencurian cookie lewat JavaScript) dan MITM (intercept kalau koneksi tidak lewat HTTPS).
+
+**Risiko utama saat menggunakan cookies**
+a. XSS (Cross-Site Scripting): penyerang menyisipkan skrip jahat yang membaca cookie (jika cookie tidak `HttpOnly`) dan mengirimkannya ke penyerang.
+b. CSRF (Cross-Site Request Forgery): cookie sesi otomatis dikirim oleh browser sehingga request jahat dari situs lain dapat beraksi atas nama user jika tidak ada proteksi CSRF.
+c. Pengintaian / MITM: jika tidak pakai HTTPS, cookie bisa disadap di jaringan.
+d. Manipulasi/peek: cookie yang tidak disign atau dienkripsi dapat dibaca atau diubah (client-side).
+e. Ukuran & performa: cookie dikirim di setiap request, jadi payload besar memperlambat transfer.
+
+**Bagaimana Django menangani dan fitur keamanannya**
+Django membantu mengurangi risiko lewat beberapa mekanisme konfigurasi dan built-in features:
+    - Session backend (default: server-side): Django menyimpan data session di server (`django.contrib.sessions`), cookie di browser hanya menyimpan session id, bukan data user. Ini jauh lebih aman daripada menyimpan data sensitif dalam cookie.
+    - Signing: Bila kamu menggunakan `SignedCookieSession` atau `response.set_signed_cookie()`, Django menandatangani cookie menggunakan `SECRET_KEY` sehingga client tidak bisa memodifikasi tanpa terdeteksi (tapi isi masih terbaca karena bukan terenkripsi).
+    - CSRF protection: `CsrfViewMiddleware` + `{% csrf_token %}` mencegah CSRF pada POST/unsafe methods.
+    - Session rotation on login: `django.contrib.auth.login()` memanggil `rotate_token()` untuk mengurangi risiko session fixation.
+    - Pengaturan cookie flags (dikonfigurasi di `settings.py`):
+        `SESSION_COOKIE_SECURE = True` -> cookie hanya dikirim lewat HTTPS.
+        `SESSION_COOKIE_HTTPONLY = True` -> JavaScript tidak bisa mengakses cookie sesi.
+        `SESSION_COOKIE_SAMESITE = 'Lax'` (atau `'Strict'`) → mengurangi CSRF lewat cross-site requests.
+        `CSRF_COOKIE_SECURE = True`, `CSRF_COOKIE_SAMESITE = 'Lax'` untuk cookie CSRF.
+    - SecurityMiddleware & HSTS: `SecurityMiddleware` + `SECURE_HSTS_SECONDS` memaksa HTTPS dan mencegah downgrade.
+    - Template auto-escaping: Django templates escape output default sehingga mengurangi XSS risk.
+
+---
+
+## Implementasi Checklist
+
+1. **Implementasi fungsi registrasi, login, dan logout**
+    Dengan mengimplementasi login, pengguna diharuskan melakukan login terlebih dahulu agar mendapatkan akses halaman utama `main`.
+
+    Membuat fungsi dan form registrasi:
+    Tambahkan beberapa import seperti `UserCreationForm` (import formulir bawaan yang memudahkan pembuatan form register pengguna) dan `messages` pada `views.py` di `main`.
+    Menambahkan fungsi `register` di `views.py` untuk menghasilkan form registrasi secara otomatis dan akan membuat akun user ketika data disubmit dan melakukan redirect setelah data form disimpan.
+    Buat file baru `register.html` pada `main/templates` yang berisi halaman registrasi. File ini mewarisi base.html, mengisi judul halaman lewat blok `meta`, lalu menampilkan form pendaftaran dan pesan notifikasi.
+    Pada `urls.py` di direktori `main`, import fungsi yang sudah dibuat dan tambah `path url` ke dalam `urlpatterns`.
+
+    Membuat fungsi login:
+    Pada `views.py` di direktori `main`, tambah import `authenticate`, `login`, dan `AuthenticationForm`.
+    Tambahkan fungsi `login_user` untuk mengautentikasi user yang mau login. Fungsi ini menangani proses login: kalau ada input POST -> validasi form -> login user -> redirect ke halaman utama.
+    Membuat file `login.html` pada `main/templates` yang berisi template yang menampilkan halaman login dengan: Template ini menampilkan halaman Login dengan: form login (username + password), proteksi CSRF, pesan error/success jika ada, link menuju halaman Register, tampilan mengikuti struktur utama dari `base.html`.
+    Pada `urls.py` di direktori `main`, import fungsi yang sudah dibuat dan tambah `path url` ke dalam `urlpatterns`.
+
+    Membuat fungsi logout:
+    Pada `views.py` di direktori `main`, tambah import `logout`.
+    Tambah fungsi `logout_user` yang digunakan untuk menghapus sesi pengguna yang saat ini masuk dan mengarahkan ke halaman login.
+    Pada `main.html` di `main/templates` tambahkan logout button.
+    Buka `urls.py` pada direktori `main` dan import fungsi yang sudah dibuat dan tambah `path url` ke dalam `urlpatterns`
+
+    Merestriksi akses halaman main dan product description:
+    Pada `views.py` di direktori `main`, tambah import `login_required`.
+    Tambah potongan kode `@login_required(login_url='/login')` di atas fungsi `show_main` dan `show_product`.
+
+2. **Membuat dua akun user dengan masing-masing tiga dummy data untuk setiap akun di lokal**
+    Akun 1:
+        Username: iniakunrochelle
+        Password: ~GUR478h
+    Akun 2:
+        Username: inibukanakunrochelle
+        Password: AvDx_4$5
+
+3. **Menghubungan model `Product` dengan `User`**
+    Pada `models.py` di subdirektori `main`, import `from django.contrib.auth.models import User`.
+    Pada model `Product` yang sudah dibuat, tambahkan kode `user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)` Jika user A membuat produk, maka user akan terisi dengan A. Jika A dihapus, semua produknya juga otomatis terhapus.
+    Buat file migrasi dengan `python manage.py makemigrations` dan migrasi model dengan `python manage.py migrate` karena setiap kali melakukan perubahan pada model, harus melakukan migrasi untuk menetapkan perubahan yang dilakukan.
+    Pada `views.py` di direktori `main`, ubah fungsi `create_news`. Form diisi user -> diverifikasi -> simpan data ke database sambil mencatat siapa pembuatnya (`request.user`). Kalau berhasil, balik ke halaman utama. Kalau gagal/pertama kali buka, tampilkan halaman form.
+    Modifikasi fungsi `show_main`. View show_main ini menampilkan halaman utama yang berisi daftar berita (`news_list`). User bisa memilih apakah mau melihat semua berita atau hanya berita yang dia buat sendiri. Selain itu, halaman juga menampilkan identitas user yang sedang login (username, last login, dll).
+    Menambahkan tombol filter My dan All pada `main.html` di `main/templates`.
+    Tampilkan nama author di `news_details.html` pada `main/templates`.
+
+4. **Menampilkan detail info user yang sedang logged in (username) dan cookies (last_login) pada halaman utama**
+    Pada `views.py` di subdirektori `main`, fungsi `show_main` dimodifikasi `context`-nya dengan `'name': request.user.username`. menampilkan detail informasi user yang sedang login (username). Misalnya kalau login sebagai A, maka di halaman utama nanti variabel `{{ name }}` di template akan berisi A.
+    Untuk mengambil cookie `last_login`, harus implemeentasi data dari cookies terlebih dahulu.
+    Pada `views.py` di subdirektori `main`, tambah import `HttpResponseRedirect`, `reverse`, dan `datetime`.
+    Pada fungsi `login_user`, tambahkan logika untuk menyimpan cookie bernama `last_login` yang menyimpan waktu terakhir pengguna berhasil masuk. Nilai timestamp ini bisa diambil saat proses autentikasi sukses. Jadi, di dalam blok `if form.is_valid():`, kodenya diganti atau ditambahkan seperti berikut.
+    ```
+    ...
+    if form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        response = HttpResponseRedirect(reverse("main:show_main"))
+        response.set_cookie('last_login', str(datetime.datetime.now()))
+        return response
+    ...
+    ```
+    Setelah user berhasil login, ia diarahkan ke halaman utama (`show_main`) dengan cookie tambahan yang berisi timestamp login.
+    Pada fungsi `show_main`, tambah potongan kode `'last_login': request.COOKIES.get('last_login', 'Never')` di variable `context`.
+    Mengubah fungsi `logout_user` untuk menghapus cookie `last_login` jika user melakukan logout.
+    Tambahkan potongan kode `<h5>Sesi terakhir login: {{ last_login }}</h5>` pada `main.html` di direktori `main/templates` setelah tombol logout untuk menampilkan waktu terakhir user login.
+
+</details>
+
+---
