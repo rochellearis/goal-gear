@@ -1,4 +1,5 @@
 import datetime
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -13,18 +14,44 @@ from main.models import Product
 
 @login_required(login_url='/login')
 def show_main(request):
-    filter_type = request.GET.get("filter", "all")  # default 'all'
+    # Ambil semua produk
+    products = Product.objects.all()
 
-    if filter_type == "all":
-        product_list = Product.objects.all()
+    # Filter kategori
+    category = request.GET.get('category')
+    if category:
+        products = products.filter(category=category)
+
+    # Filter "my"
+    filter_type = request.GET.get('filter')
+    if filter_type == "my":
+        products = products.filter(user=request.user)
+
+    # Search
+    q = request.GET.get('q', '')
+    if q:
+        products = products.filter(
+            Q(name__icontains=q) |
+            Q(category__icontains=q) |
+            Q(description__icontains=q)
+        )
+
+    # Deteksi apakah ini HOME (tanpa filter, kategori, atau search)
+    is_home = not filter_type and not category and not q
+
+    if is_home:
+        featured_products = products.filter(is_featured=True)
+        non_featured_products = products.exclude(is_featured=True)
     else:
-        product_list = Product.objects.filter(user=request.user)
+        featured_products = None
+        non_featured_products = products  # tampil semua (campur featured)
+
     context = {
-        'npm': '2406429014',
-        'name': 'Rochelle Marchia Arisandi',
-        'class': 'PBP B',
-        'app_name': 'GoalGear', # nama aplikasi
-        'product_list': product_list,
+        'app_name': 'Goal Gear',
+        'featured_products': featured_products,
+        'product_list': non_featured_products,
+        'category': category,
+        'q': q,
         'last_login': request.COOKIES.get('last_login', 'Never')
     }
     return render(request, "main.html", context)
@@ -34,9 +61,9 @@ def create_product(request):
     form = ProductForm(request.POST or None)
 
     if form.is_valid() and request.method == 'POST':
-        news_entry = form.save(commit = False)
-        news_entry.user = request.user
-        news_entry.save()
+        product_entry = form.save(commit = False)
+        product_entry.user = request.user
+        product_entry.save()
         return redirect('main:show_main')
 
     context = {
@@ -114,3 +141,21 @@ def logout_user(request):
     response = HttpResponseRedirect(reverse('main:login'))
     response.delete_cookie('last_login')
     return response
+
+def edit_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    form = ProductForm(request.POST or None, instance=product)
+    if form.is_valid() and request.method == 'POST':
+        form.save()
+        return redirect('main:show_main')
+
+    context = {
+        'form': form
+    }
+
+    return render(request, "edit_product.html", context)
+
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    product.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))

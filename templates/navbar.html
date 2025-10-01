@@ -1,0 +1,194 @@
+<nav class="fixed top-0 left-0 w-full z-50" style="background-color: rgba(246,247,248,0.95); backdrop-filter: blur(6px); border-bottom: 1px solid #bfc7cb;">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+
+      <!-- LEFT: Logo -->
+      <div class="flex items-center gap-3">
+        <a href="{% url 'main:show_main' %}" class="flex items-center gap-2">
+          <div class="flex items-center justify-center w-10 h-10 rounded-md bg-[#5459AC] text-white shadow-sm">
+            <!-- Soccer ball icon -->
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+              <!-- lingkaran dasar muted abu -->
+              <circle cx="12" cy="12" r="10" class="text-slate-200" />
+              <!-- pola bola dengan warna utama navbar -->
+              <path d="M12 2l3 2-1 4h-4L9 4l3-2zm0 20l-3-2 1-4h4l1 4-3 2zm10-10l-2-3-4 1v4l4 1 2-3zM2 12l2 3 4-1v-4l-4-1-2 3z" 
+                    class="text-[#1e4b63]" />
+            </svg>
+          </div>
+          <div class="leading-tight">
+            <div class="text-lg font-extrabold text-slate-900">Goal Gear</div>
+            <div class="text-xs text-slate-500 -mt-0.5">Football Shop</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- CENTER: Categories (replaces search box) -->
+      <div class="hidden sm:flex flex-1 justify-center px-4">
+        <nav aria-label="Kategori utama" class="flex items-center gap-2">
+          <!-- home -->
+          <a href="{% url 'main:show_main' %}"
+            class="text-sm font-medium px-3 py-1 rounded-md transition
+                    {% if not request.GET.category %}bg-[#7F8CAA] text-white{% else %}text-slate-700 hover:text-slate-900 hover:bg-slate-50{% endif %}">
+            Home
+          </a>
+
+          <!-- jersey -->
+          <a href="{% url 'main:show_main' %}?category=jersey"
+            class="text-sm font-medium px-3 py-1 rounded-md transition
+                    {% if request.GET.category == 'jersey' %}bg-[#7F8CAA] text-white{% else %}text-slate-700 hover:text-slate-900 hover:bg-slate-50{% endif %}">
+            Jersey
+          </a>
+
+          <!-- sepatu -->
+          <a href="{% url 'main:show_main' %}?category=sepatu"
+            class="text-sm font-medium px-3 py-1 rounded-md transition
+                    {% if request.GET.category == 'sepatu' %}bg-[#7F8CAA] text-white{% else %}text-slate-700 hover:text-slate-900 hover:bg-slate-50{% endif %}">
+            Sepatu
+          </a>
+
+          <!-- bola -->
+          <a href="{% url 'main:show_main' %}?category=bola"
+            class="text-sm font-medium px-3 py-1 rounded-md transition
+                    {% if request.GET.category == 'bola' %}bg-[#7F8CAA] text-white{% else %}text-slate-700 hover:text-slate-900 hover:bg-slate-50{% endif %}">
+            Bola
+          </a>
+
+          <!-- merchandise -->
+          <a href="{% url 'main:show_main' %}?category=merchandise"
+            class="text-sm font-medium px-3 py-1 rounded-md transition
+                    {% if request.GET.category == 'merchandise' %}bg-[#7F8CAA] text-white{% else %}text-slate-700 hover:text-slate-900 hover:bg-slate-50{% endif %}">
+            Merchandise
+          </a>
+
+          <!-- accessory -->
+          <a href="{% url 'main:show_main' %}?category=accessory"
+            class="text-sm font-medium px-3 py-1 rounded-md transition
+                    {% if request.GET.category == 'accessory' %}bg-[#7F8CAA] text-white{% else %}text-slate-700 hover:text-slate-900 hover:bg-slate-50{% endif %}">
+            Accessory
+          </a>
+        </nav>
+      </div>
+
+      <!-- RIGHT: Desktop links & user -->
+      <div class="flex items-center gap-4">
+
+        <!-- Desktop nav links -->
+        <div class="hidden md:flex items-center gap-4">
+          <a href="{% url 'main:create_product' %}"
+            class="inline-flex items-center px-3 py-1.5 bg-[#5459AC] hover:bg-[#52357B] text-white rounded-md text-sm font-medium transition">
+            Add Product
+          </a>
+        </div>
+
+        <!-- Cart icon (example) -->
+        <a href="#" class="relative hidden md:inline-flex p-2 rounded-md hover:bg-slate-50 transition">
+          <svg class="w-5 h-5 text-slate-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 3h2l.6 3M7 13h10l3-8H6.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="10" cy="20" r="1.5" fill="currentColor"/><circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          <!-- badge -->
+          <span class="absolute -top-1 -right-1 bg-[#5459AC] text-white text-xs font-semibold rounded-full px-1.5">0</span>
+        </a>
+
+        <!-- Auth area -->
+        {% if user.is_authenticated %}
+        <div class="hidden md:flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-sm font-semibold text-slate-900">{{ name|default:user.username }}</div>
+            <div class="text-xs text-slate-500">{{ last_login }}</div>
+          </div>
+          <a href="{% url 'main:logout' %}"
+             class="inline-flex items-center px-3 py-1.5 bg-[#5459AC] hover:bg-[#52357B] text-white rounded-md text-sm font-medium transition">
+            Logout
+          </a>
+        </div>
+        {% else %}
+        <div class="hidden md:flex items-center gap-2">
+          <a href="{% url 'main:login' %}" class="text-sm text-slate-700 hover:text-slate-900 transition">Login</a>
+          <a href="{% url 'main:register' %}" class="inline-flex items-center px-3 py-1.5 bg-[#5459AC] hover:bg-[#163f52] text-white rounded-md text-sm font-medium transition">Register</a>
+        </div>
+        {% endif %}
+
+        <!-- Mobile hamburger -->
+        <button id="nav-toggle" aria-expanded="false" aria-controls="mobile-menu" class="md:hidden p-2 rounded-md hover:bg-slate-100">
+          <span class="sr-only">Open main menu</span>
+          <svg class="w-6 h-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE MENU: slide-down -->
+  <div id="mobile-menu" class="md:hidden transform-gpu origin-top transition-all duration-250 ease-in-out hidden">
+    <div class="px-4 pt-4 pb-6" style="background-color: rgba(246,247,248,0.99); border-top: 1px solid #eef0f1;">
+      <!-- compact search (kept for mobile) -->
+      <form action="{% url 'main:show_main' %}" method="get" class="mb-3">
+        <label for="m-search" class="sr-only">Search</label>
+        <div class="flex gap-2">
+          <input id="m-search" name="q" type="search" placeholder="Cari produk..."
+            class="flex-1 px-3 py-2 border border-[#bfc7cb] rounded-md focus:ring-2 focus:ring-[rgba(30,75,99,0.08)] focus:border-[#1e4b63]">
+          <button type="submit" class="px-3 py-2 bg-[#1e4b63] hover:bg-[#163f52] text-white rounded-md">Cari</button>
+        </div>
+      </form>
+      <div class="mb-3">
+        <a href="{% url 'main:show_main' %}" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50 font-medium">
+          Home
+        </a>
+      </div>
+
+      <!-- MOBILE: categories -->
+      <div class="mb-3 space-y-2">
+        <div class="text-xs text-slate-500 uppercase tracking-wide px-1">Kategori</div>
+        <a href="{% url 'main:show_main' %}?category=jersey" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Jersey</a>
+        <a href="{% url 'main:show_main' %}?category=sepatu" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Sepatu</a>
+        <a href="{% url 'main:show_main' %}?category=bola" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Bola</a>
+        <a href="{% url 'main:show_main' %}?category=merchandise" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Merchandise</a>
+        <a href="{% url 'main:show_main' %}?category=accessory" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Accessory</a>
+      </div>
+
+      <div class="space-y-2">
+        <a href="{% url 'main:create_product' %}" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Add Product</a>
+      </div>
+
+      <div class="pt-4" style="border-top: 1px solid #eef0f1;">
+        {% if user.is_authenticated %}
+        <div class="mb-3">
+          <div class="font-semibold text-slate-900">{{ name|default:user.username }}</div>
+          <div class="text-sm text-slate-500">{{ last_login }}</div>
+        </div>
+        <a href="{% url 'main:logout' %}" class="block w-full text-center py-2 bg-[#1e4b63] hover:bg-[#163f52] text-white rounded-md">Logout</a>
+        {% else %}
+        <a href="{% url 'main:login' %}" class="block py-2 px-2 rounded-md text-slate-800 hover:bg-slate-50">Login</a>
+        <a href="{% url 'main:register' %}" class="block mt-2 py-2 px-2 rounded-md text-center bg-[#1e4b63] hover:bg-[#163f52] text-white">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const toggle = document.getElementById('nav-toggle');
+      const menu = document.getElementById('mobile-menu');
+
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('hidden');
+        // set aria-expanded correctly
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', (!expanded).toString());
+        // simple slide animation
+        if (!open) {
+          menu.style.display = 'block';
+          menu.style.opacity = 0;
+          menu.style.transform = 'scaleY(0.95)';
+          setTimeout(() => { menu.style.opacity = 1; menu.style.transform = 'scaleY(1)'; }, 10);
+        } else {
+          menu.style.opacity = 0;
+          menu.style.transform = 'scaleY(0.95)';
+          setTimeout(() => { menu.style.display = 'none'; }, 180);
+        }
+      });
+    })();
+  </script>
+</nav>

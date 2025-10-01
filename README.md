@@ -473,3 +473,191 @@ Django membantu mengurangi risiko lewat beberapa mekanisme konfigurasi dan built
 </details>
 
 ---
+
+<details>
+<Summary><b>Tugas 5</b></Summary>
+
+## Urutan prioritas pengambilan CSS selector
+
+Urutan prioritas CSS, atau yang sering disebut specificity, menentukan aturan mana yang diterapkan ketika ada beberapa selector yang menargetkan elemen HTML yang sama. Prioritas tertinggi dimiliki oleh inline style, yaitu CSS yang ditulis langsung di atribut `style` pada elemen. Selanjutnya, selector berdasarkan ID memiliki prioritas lebih tinggi dibandingkan selector lain seperti class, atribut, atau pseudo-class. Selector berbasis class, atribut, atau pseudo-class menempati tingkat prioritas menengah, sedangkan element selector** atau pseudo-element berada di urutan paling rendah. Selain itu, jika terdapat aturan dengan !important, properti tersebut akan menimpa hampir semua aturan lain, kecuali ada inline style yang juga menggunakan !important. Terakhir, jika dua aturan memiliki tingkat specificity yang sama, maka aturan yang muncul terakhir dalam file CSS akan diterapkan pada elemen tersebut. Dengan memahami urutan ini, kita bisa mengatur tampilan elemen HTML secara konsisten dan menghindari konflik antar CSS.
+
+---
+
+## Pentingnya responsive design dalam pengembangan aplikasi web dan contohnya
+
+Responsive design penting karena web sekarang diakses dari perangkat yang beragam, ponsel, tablet, laptop, bahkan TV, sehingga tampilan dan fungsi harus menyesuaikan agar pengalaman pengguna tetap konsisten dan nyaman. Tanpa responsive design, pengguna mobile akan kesulitan membaca, menavigasi, dan menyelesaikan tugas (mis. checkout, isi formulir), yang berarti hilangnya trafik, penurunan konversi, dan citra merek yang kurang profesional.
+
+**Contoh kenapa penting:**
+1. Akses & jangkauan: desain responsif membuat satu situs bisa dipakai di banyak perangkat tanpa versi terpisah.
+2. Pengalaman pengguna (UX): tata letak yang adaptif, tombol cukup besar untuk sentuhan, teks yang mudah dibaca meningkatkan keterlibatan.
+3. SEO & discoverability: mesin pencari memprioritaskan pengalaman mobile (mobile-first indexing), jadi situs responsif cenderung mendapat peringkat lebih baik.
+4. Pemeliharaan lebih sederhana: satu basis kode/front-end yang responsif lebih mudah dirawat dibandingkan banyak versi desktop/mobile.
+5. Performa & konversi: desain responsif yang dioptimalkan berperan pada kecepatan muat dan tingkat konversi.
+
+**Contoh aplikasi/situs yang sudah menerapkan responsive design (alat populer yang umumnya responsif) dan alasannya:**
+1. Airbnb: tampilan beradaptasi apik di layar kecil maupun besar; fokus pada booking cepat dan foto besar membuat UX konsisten.
+2. Wikipedia: layout teks dan nav yang adaptif sehingga mudah dibaca di ponsel; prioritas konten membuatnya efektif.
+3. Gmail (web): antarmuka menyesuaikan kolom dan daftar, tetap bisa membaca/membalas email di ponsel tanpa perlu aplikasi native.
+Alasan mereka responsif: target pengguna luas, tujuan interaksi singkat/sering di mobile, dan pentingnya konversi/retensi.
+
+**Contoh aplikasi/situs yang sering tidak sepenuhnya responsif dan kenapa:**
+1. Situs pemerintahan/instansi lama: banyak masih menggunakan template lawas atau sistem CMS kustom; anggaran & prioritas membatasi redesign.
+2. Aplikasi enterprise/ERP lama (mis. antarmuka SAP klasik atau aplikasi internal tertentu): dibuat untuk desktop dengan workflow kompleks, migrasi ke UI responsif mahal dan butuh pengembangan besar.
+3. Beberapa toko online kecil yang belum update: pemilik belum memprioritaskan UX mobile atau pakai template lama. Alasan tidak responsif: keterbatasan anggaran, dependensi pada sistem lawas, kebutuhan fitur kompleks yang sulit dipadatkan ke layar kecil, atau target audiens yang dominan desktop.
+
+---
+
+## Margin, border, dan padding: cara mengimplementasikan ketiga hal tersebut
+
+**Perbedaan singkat**
+- Padding adalah ruang di dalam elemen antara isi (content) dan batas (border). Padding menambah area latar / background elemen.
+- Border adalah garis di luar padding yang mengelilingi elemen — terlihat jika Anda beri `border-style`/`border-width`.
+- Margin adalah ruang di luar border yang memisahkan elemen dengan elemen lain (atau tepi kontainer). Margin tidak berwarna oleh background elemen.
+
+Secara urut dari dalam ke luar: content -> padding -> border -> margin.
+
+**Point penting**
+- Padding dan border mempengaruhi ukuran kotak kecuali jika `box-sizing`: `border-box`; (dengan `border-box`, lebar/tinggi yang Anda set sudah termasuk padding+border).
+- Margin vertikal antar elemen blok dapat collapse (bergabung) — catatan untuk layout.
+- Border butuh `border-style` (mis. solid) agar muncul.
+
+**Contoh implementasi (html + css)**
+html:
+```
+<div class="card">
+  <p>Isi elemen (content)</p>
+</div>
+```
+
+css:
+```
+.card {
+  /* ukuran & background */
+  width: 300px;
+  background: #fff;
+
+  /* padding = ruang di dalam (atas-kanan-bawah-kiri) */
+  padding: 16px 24px; /* shorthand: padding: top/right-bottom/left */
+
+  /* border = garis di luar padding */
+  border: 2px solid #5459AC;
+  border-radius: 8px;
+
+  /* margin = ruang di luar border */
+  margin: 24px auto; /* 24px vertikal, auto horizontal (center) */
+
+  /* box sizing yang direkomendasikan */
+  box-sizing: border-box;
+}
+```
+
+**Contog pengaturan tiap sisi**
+css:
+```
+/* padding tiap sisi */
+padding-top: 8px;
+padding-right: 12px;
+padding-bottom: 8px;
+padding-left: 12px;
+
+/* border tiap sisi */
+border-top: 1px solid #ccc;
+border-left-width: 2px;
+
+/* margin tiap sisi */
+margin-top: 16px;
+margin-right: 0;
+margin-bottom: 16px;
+margin-left: 0;
+```
+
+---
+
+## Konsep flex box dan grid layout beserta kegunaannya
+
+**Flexbox (Flexible Box):** cara mengatur tata letak satu dimensi (baris atau kolom). Flexbox membuat item anak dalam sebuah kontainer bisa tumbuh, menyusut, dan ter-distribusi secara mudah: Anda mengatur arah (`row`/`column`), perataan utama (`justify-content`) dan perataan silang (`align-items`), lalu tiap item bisa diberi `flex` (mis. `flex: 1`) untuk mengisi ruang. Kegunaannya: menyusun bar navigasi, tombol aksi, baris kartu yang butuh distribusi ruang dinamis, membuat kolom dengan tinggi sama, atau membuat elemen tetap center baik horizontal maupun vertikal. Singkat: fleksibel untuk layout linear/komponen.
+
+**Grid Layout (CSS Grid):** sistem dua dimensi (baris dan kolom) untuk membangun tata letak halaman yang lebih kompleks. Dengan Grid Anda mendefinisikan baris/kolom di kontainer (`grid-template-columns/rows`), menempatkan item ke sel atau area (`grid-column`, `grid-row`), dan mengontrol gap antar sel. Kegunaannya: layout halaman besar (header/sidebar-content-footer), galeri gambar berstruktur, dashboard, atau layout responsif yang berubah secara signifikan di breakpoint. Singkat: kuat untuk grid/area 2D dan posisi presisi.
+
+**Kapan pakai yang mana**
+- Pakai Flexbox untuk susunan linier/komponen di dalam satu baris atau satu kolom (alignment, distribusi ruang, item yang harus menyesuaikan ukuran).
+- Pakai Grid untuk layout halaman dua dimensi atau ketika Anda butuh kontrol explicit atas baris dan kolom sekaligus.
+- Kombinasikan: seringkali container utama dibuat dengan Grid, lalu tiap cell/komponen diatur dengan Flexbox.
+
+**Keunggulan:** Flexbox lebih mudah dan cepat untuk alignment/flow linear, Grid lebih ekspresif untuk tata letak kompleks dan responsif.
+
+---
+## Implementasi Checklist
+
+1. **Implementasi fungsi menghapus dan mengedit product**
+    Pada `views.py` di subdirektori `main`, buat fungsi baru `edit_news` dengan parameter `request`.
+    Buat berkas `edit_news.html` pada `main/templates`. Ini adalah template Django untuk halaman edit product, yang menampilkan form HTML dari objek `form` untuk mengubah data product dan mengirimkannya dengan metode POST.
+    Pada `urls.py` di subdirektori `main`, dan import fungsi yang sudah dibuat serta tambah path ke dalam urlpatterns untuk akses fungsi.
+    Di `main.html` yang berada pada subdirektori `main/templates`, perbarui potongan kode untuk memunculkan edit pada setiap product.
+
+    Pada `views.py` di subdirektori `main`, buat fungsi baru `delete_news` dengan parameter `request` dan `id` untuk delete data product.
+    Pada `urls.py` di subdirektori `main`, dan import fungsi yang sudah dibuat serta tambah path ke dalam urlpatterns untuk akses fungsi.
+    Di `main.html` yang berada pada subdirektori `main/templates`, perbarui potongan kode untuk memunculkan 'delete' pada setiap product.
+
+2. **Kustomisasi design pada template HTML yang telah dibuat menggunakan CSS menggunakan Tailwind**
+    1. Kustomisasi halaman login dan register
+        Halaman login dan register telah didesain mengikuti tema aplikasi dengan kombinasi warna ungu dan biru. Form login/register memiliki border, shadow, dan padding yang nyaman untuk input, serta tampilan tombol yang responsif saat di-hover. Hal ini membuat pengguna dapat dengan mudah memahami area input dan melakukan autentikasi.
+
+        Pengguna membuka halaman login (/login/).
+        Form login menampilkan input username/email dan password dengan styling tema ungu-biru, border, padding, dan shadow.
+        Tombol login memiliki efek hover untuk memberikan feedback visual.
+        Jika user belum memiliki akun, bisa klik link ke halaman register.
+        Halaman register (/register/) menampilkan form pembuatan akun dengan styling yang konsisten.
+
+    2. Kustomisasi halaman tambah dan edit product
+        Halaman `create_product` dan `edit_product` menampilkan form dalam box putih dengan border dan rounded corners, dilengkapi shadow lembut untuk memberi efek fokus. Setiap field form diberi padding, border, dan warna latar yang konsisten dengan tema aplikasi, sehingga pengguna jelas mengetahui area input dan dapat mengisi atau memperbarui data produk dengan nyaman. Halaman edit hanya mengubah data produk yang sudah ada, tidak menambahkan produk baru.
+
+        - Create Product:
+            Buat template `create_product.html` yang mengikuti tema warna aplikasi (ungu-biru), box putih dengan border dan shadow.
+            Loop tiap field form untuk styling tiap input (padding, border, rounded corners, focus outline).
+            Tambahkan tombol Publish Product dan tombol Cancel.
+            Setelah submit, simpan ke database dengan `form.save(commit=False)` dan set `user=request.user`.
+
+        - Edit Product:
+            Gunakan ProductForm(`instance=product`) agar form sudah terisi data lama.
+            Template sama seperti `create_product.html`, hanya tombol submit diganti menjadi Update Product.
+            Setelah submit, form akan mengupdate data di database dengan `form.save()`.
+
+    3. Kustomisasi halaman detail product
+        Halaman detail product menampilkan semua informasi produk secara lengkap: nama, kategori, harga, deskripsi, stok, brand, dan thumbnail. Jika produk termasuk featured, ditandai dengan label yang menonjol. Layout halaman tetap responsif, sehingga tampilan tetap rapi baik di desktop maupun mobile.
+
+        Pengguna klik nama atau gambar produk dari daftar produk.
+        Halaman detail menampilkan informasi lengkap: thumbnail, nama, kategori, harga, deskripsi, stok, brand.
+        Jika produk featured, label "Featured" ditampilkan dengan warna mencolok.
+        Tombol Edit hanya muncul jika produk milik pengguna yang login.
+    
+    4. Halaman daftar product
+        Pisahkan featured products dan normal products untuk ditampilkan di home.
+        Jika query filter atau search aktif, tampilkan semua produk sesuai filter, tanpa memunculkan featured.
+        Template menampilkan produk dalam bentuk card.
+        Card berisi thumbnail, nama, kategori, harga.
+        Card featured lebih besar dan mencolok.
+        Tambahkan tombol Edit dan Hapus di setiap card.
+        Jika tidak ada produk, tampilkan ilustrasi dan pesan No Products Found.
+        Layout grid responsive menggunakan Tailwind grid-cols-* untuk mobile dan desktop.
+
+        Tanpa Produk: Jika belum ada produk yang tersimpan, halaman menampilkan ilustrasi dan pesan “No Products Found” agar pengguna mengetahui kondisi kosongnya daftar produk.
+
+        Dengan Produk: Produk ditampilkan menggunakan card yang menarik, berbeda dari desain tutorial, menampilkan thumbnail, nama, kategori, harga, dan label "featured" bila relevan. Halaman home menunjukan produk "featured" dengan size yang lebih besar dan mencolok lalu di bagian bawahnya adalah produk biasa.
+
+        Action Buttons: Setiap card memiliki tiga tombol, View untuk melihat deskripsi produk, Edit untuk memperbarui data produk, dan Delete untuk menghapus produk tersebut (edit dan delete hanya ada pada produk milik pengguna yang sedang login). Layout card responsive sehingga tampilan tetap rapi di berbagai ukuran layar.
+
+        Produk per-category: Produk yang ditampilkan akan sesuai dengan kategori masing-masing produk dan halaman akan berbeda dengan home karena produk "featured" akan berukuran sama dengan produk biasa lainnya.
+
+    5. Responsive Navigation bar
+        Navbar dibuat responsif terhadap perbedaan ukuran layar. Pada desktop, menu lengkap terlihat horizontal, sedangkan di mobile, menu disederhanakan dengan tombol yang dapat diklik (hamburger) untuk menampilkan opsi. Navbar juga memuat filter cepat untuk mencari per-kategori serta navigasi ke fitur lain (Add product, Keranjang, User yang sedang login serta cookiesnya, dan tombol Logout), memudahkan pengguna dalam menjelajahi aplikasi.
+
+        Buat partial template `navbar.html.
+        Tambahkan menu horizontal untuk desktop, dan menu collapsible untuk mobile.
+        Tambahkan link ke filter produk (`All Products`, `My Products`) dan halaman utama.
+        Gunakan Tailwind responsive classes (`sm`:, `md`:, `lg`:) untuk menyesuaikan ukuran device.
+        Include navbar.html di semua template dengan `{% include 'navbar.html' %}`.
+
+</details>
+
+---

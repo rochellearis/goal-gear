@@ -1,61 +1,141 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<h1>{{ app_name }}</h1>
+{% include 'navbar.html' %}
 
-<h5>NPM: </h5>
-<p>{{ npm }}</p>
+<main class="min-h-screen bg-slate-50 py-10 pt-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-<h5>Name:</h5>
-<p>{{ name }}</p>
+    <!-- HERO / QUOTE -->
+    <section class="rounded-2xl overflow-hidden shadow-sm bg-gradient-to-r from-[#5459AC] to-[#52357B] text-white p-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold leading-tight">{{ app_name }}</h1>
+          <p class="mt-2 text-sm md:text-base text-[#EDEFF6] opacity-90">
+            "Play bold. Play fair. Play Goal Gear." — curated gear for the beautiful game.
+          </p>
+        </div>
+        <div class="hidden sm:flex items-center gap-4">
+          <a href="{% url 'main:show_main' %}?filter=all"
+             class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium
+                    bg-[#7F8CAA] hover:bg-[#6f7fa0] text-white transition">
+            All Products
+          </a>
+          <a href="{% url 'main:show_main' %}?filter=my"
+             class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium
+                    bg-white bg-opacity-10 hover:bg-opacity-20 text-white transition">
+            My Products
+          </a>
+        </div>
+      </div>
+    </section>
 
-<h5>Class:</h5>
-<p>{{ class }}</p>
+    <!-- MOBILE HERO ACTIONS (small screens) -->
+    <div class="sm:hidden flex items-center gap-3">
+      <a href="{% url 'main:show_main' %}?filter=all" class="px-3 py-2 rounded-md text-sm font-medium bg-[#7F8CAA] hover:bg-[#6f7fa0] text-white transition">All</a>
+    </div>
 
-<a href="{% url 'main:create_product' %}">
-  <button>+ Add Product</button>
-</a>
+    <!-- SEARCH BAR (di atas Featured) -->
+    <section class="mb-6">
+      <form action="{% url 'main:show_main' %}" method="get" class="max-w-lg mx-auto">
+        <!-- preserve current filter (all/my) saat mencari -->
+        <input type="hidden" name="filter" value="{{ request.GET.filter|default:'all' }}">
 
-<a href="{% url 'main:logout' %}">
-  <button>Logout</button>
-</a>
-<h5>Sesi terakhir login: {{ last_login }}</h5>
-<hr>
+        <div class="flex gap-2">
+          <input
+            type="search"
+            name="q"
+            value="{{ request.GET.q|default:'' }}"
+            placeholder="Cari produk (nama, kategori, deskripsi)..."
+            class="flex-1 px-4 py-2 rounded-md border border-[#7F8CAA] bg-white text-slate-900 placeholder-slate-400
+                  focus:outline-none focus:ring-2 focus:ring-[#7F8CAA] focus:border-[#5459AC] transition"
+          />
+          <button type="submit" class="px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">
+            Search
+          </button>
+        </div>
+      </form>
+    </section>
 
-<a href="?filter=all">
-    <button type="button">All Products</button>
-</a>
-<a href="?filter=my">
-    <button type="button">My Products</button>
-</a> 
+    <!-- FEATURED PRODUCTS -->
+    {% if featured_products %}
+    <section>
+      <h2 class="text-xl font-bold text-slate-800 mb-6">🔥 Featured Products</h2>
 
-{% if not product_list %}
-<p>Belum ada data produk pada Goal Gear.</p>
-{% else %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {% for product in featured_products %}
+          <article class="bg-white rounded-3xl border-2 border-[#5459AC] shadow-xl overflow-hidden transform hover:scale-[1.02] transition">
+            {% if product.thumbnail %}
+              <div class="h-72 bg-slate-100 overflow-hidden">
+                <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+              </div>
+            {% else %}
+              <div class="h-72 bg-gradient-to-b from-[#5459AC]/10 to-[#7F8CAA]/6 flex items-center justify-center text-slate-400">
+                No image
+              </div>
+            {% endif %}
+            <div class="p-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-extrabold text-slate-900">
+                  <a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a>
+                </h3>
+                <span class="text-xs px-3 py-1 rounded-full bg-[#52357B] text-white font-semibold shadow">
+                  Featured
+                </span>
+              </div>
+              <p class="text-sm text-slate-500">{{ product.category|capfirst }}</p>
+              <p class="text-lg font-bold text-[#5459AC]">Rp{{ product.price }}</p>
+              <p class="text-sm text-slate-600">{{ product.description|truncatewords:25 }}</p>
 
-{% for product in product_list %}
-<div>
-  <h2><a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a></h2>
+              <div class="mt-4 flex items-center gap-3">
+                <a href="{% url 'main:show_product' product.id %}" 
+                  class="px-5 py-2 rounded-md bg-[#5459AC] hover:bg-[#463f8f] text-white font-medium transition">
+                  View
+                </a>
+                {% if user.is_authenticated and product.user == user %}
+                  <a href="{% url 'main:edit_product' product.pk %}" 
+                    class="px-5 py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition">
+                    Edit
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
 
-  <p><b>{{ product.category }}</b>
-  {% if product.is_featured %} | <b>Featured</b>{% endif %} 
-  | Price: Rp{{ product.price }}
-  | Stock: {{ product.stock }}
-  {% if product.brand %} | Brand: {{ product.brand }}{% endif %}
-  {% if product.rating %} | Rating: {{ product.rating }}{% endif %}
-  </p>
+    {% if category %}
+    <h2 class="text-xl font-bold text-[#5459AC] mb-4 capitalize">{{ category }}</h2>
+    {% endif %}
 
-  {% if product.thumbnail %}
-  <img src="{{ product.thumbnail }}" alt="thumbnail" width="150">
-  <br />
-  {% endif %}
+    <!-- PRODUCTS LIST / GRID -->
+    <section>
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Products</h2>
 
-  <p>{{ product.description|truncatewords:25 }}...</p>
+      {% if product_list %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for product in product_list %}
+            {% include 'card_products.html' with product=product %}
+        {% endfor %}
+        </div>
+      {% else %}
+        <div class="rounded-lg p-6 bg-white border border-slate-100 text-slate-600 shadow-sm text-center">
+          <img src="{% static 'image/no-news.png' %}" alt="No Products Found" class="mx-auto w-40 h-40 object-contain mb-4">
+          <h3 class="text-lg font-semibold text-slate-900 mb-2">No Products Found</h3>
+          <p class="text-sm text-slate-500 mb-4">Be the first to add a product!</p>
+          {% if user.is_authenticated %}
+            <a href="{% url 'main:create_product' %}" 
+              class="inline-block px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">
+              Create Product
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
 
-  <p><a href="{% url 'main:show_product' product.id %}"><button>View Details</button></a></p>
-</div>
+    </section>
 
-<hr>
-{% endfor %}
-
-{% endif %}
+  </div>
+</main>
 {% endblock content %}
