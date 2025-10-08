@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
 {% include 'navbar.html' %}
 
@@ -13,53 +14,83 @@
       </a>
     </div>
 
-    <!-- Product Card -->
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col md:flex-row gap-6 p-6">
+    <!-- Loading State -->
+    <div id="loading-state" class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden p-8 text-center">
+      <svg class="animate-spin h-8 w-8 text-green-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <p class="text-slate-600 mt-3">Loading product detail...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden p-8 text-center hidden">
+      <div class="w-16 h-16 mx-auto mb-4">
+        <div class="text-red-500 text-5xl">⚠️</div>
+      </div>
+      <h3 class="text-lg font-medium text-slate-900 mb-2">Failed to load product</h3>
+      <p class="text-slate-500 mb-4">Please try again later.</p>
+      <div class="flex items-center justify-center gap-3">
+        <button id="error-retry-btn" class="px-4 py-2 rounded-md bg-[#7F8CAA] text-white">Retry</button>
+        <a href="{% url 'main:show_main' %}" class="px-4 py-2 rounded-md border border-slate-200">Back to list</a>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden p-8 text-center hidden">
+      <div class="w-16 h-16 mx-auto mb-4">
+        <div class="text-yellow-500 text-5xl">🗂️</div>
+      </div>
+      <h3 class="text-lg font-medium text-slate-900 mb-2">Product not found</h3>
+      <p class="text-slate-500 mb-4">The product may have been removed or is not available anymore.</p>
+      <div class="flex items-center justify-center gap-3">
+        <button id="empty-retry-btn" class="px-4 py-2 rounded-md bg-[#7F8CAA] text-white">Reload</button>
+        <a href="{% url 'main:show_main' %}" class="px-4 py-2 rounded-md border border-slate-200">Back to product list</a>
+      </div>
+    </div>
+
+    <!-- Product Card (ready state) -->
+    <div id="product-card" class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col md:flex-row gap-6 p-6 hidden">
       
       <!-- Thumbnail -->
       <div class="md:w-1/3 flex items-center justify-center bg-slate-100 overflow-hidden rounded-lg">
-        {% if product.thumbnail %}
-          <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="object-cover w-full h-full">
-        {% else %}
-          <img src="{% static 'image/no-news.png' %}" alt="No Image" class="object-contain w-40 h-40">
-        {% endif %}
+        <img id="product-thumbnail" src="{% static 'image/no-news.png' %}" alt="Product image" class="object-cover w-full h-full">
       </div>
 
       <!-- Product Info -->
       <div class="md:w-2/3 flex flex-col justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 mb-2">{{ product.name }}</h1>
+          <h1 id="product-name" class="text-2xl font-bold text-slate-900 mb-2">Loading...</h1>
 
           <!-- Product Details -->
           <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 mb-4">
             <!-- Category Box -->
-            <span class="px-2 py-1 rounded-md bg-slate-200 text-slate-700 font-medium">
-              {{ product.category|capfirst }}
+            <span id="product-category" class="px-2 py-1 rounded-md bg-slate-200 text-slate-700 font-medium">
+              <!-- category -->
             </span>
 
-            {% if product.is_featured %}
-              <span class="px-2 py-0.5 rounded-full bg-[#52357B] text-white font-semibold">Featured</span>
-            {% endif %}
-            <span><b>Price:</b> Rp{{ product.price }}</span>
-            <span><b>Stock:</b> {{ product.stock }}</span>
-            {% if product.brand %}<span><b>Brand:</b> {{ product.brand }}</span>{% endif %}
-            {% if product.rating %}<span><b>Rating:</b> {{ product.rating }}</span>{% endif %}
+            <span id="badge-featured" class="px-2 py-0.5 rounded-full bg-[#52357B] text-white font-semibold hidden">Featured</span>
+
+            <span id="product-price"><b>Price:</b> -</span>
+            <span id="product-stock"><b>Stock:</b> -</span>
+            <span id="product-brand" class="hidden"><b>Brand:</b> <span id="product-brand-value"></span></span>
+            <span id="product-rating" class="hidden"><b>Rating:</b> <span id="product-rating-value"></span></span>
           </div>
 
-          <p class="text-slate-700">{{ product.description }}</p>
+          <p id="product-description" class="text-slate-700">-</p>
         </div>
 
         <!-- Author -->
         <p class="mt-4 text-sm text-slate-500">
-          Author: {% if product.user %}{{ product.user.username }}{% else %}Anonymous{% endif %}
+          Author: <span id="product-author">Anonymous</span>
         </p>
 
         <!-- Action Buttons -->
         <div class="mt-6 flex flex-wrap gap-3">
-          <button class="px-6 py-2 rounded-md bg-green-600 text-white font-medium hover:bg-green-700 transition">
+          <button id="add-to-cart-btn" class="px-6 py-2 rounded-md bg-green-600 text-white font-medium hover:bg-green-700 transition">
             Add to Cart
           </button>
-          <button class="px-6 py-2 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition">
+          <button id="buy-now-btn" class="px-6 py-2 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition">
             Buy Now
           </button>
         </div>
@@ -69,4 +100,186 @@
 
   </div>
 </main>
+
+<!-- Script: AJAX loader -->
+<script>
+  // --- Config: product id and endpoint construction ---
+  const PRODUCT_ID = "{{ product.id }}";
+  // endpoint template: replace the placeholder with the real id
+  const PRODUCT_ENDPOINT = `{% url 'main:show_json_by_id' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', PRODUCT_ID);
+
+  // Helpful static fallback image path
+  const NO_IMAGE = "{% static 'image/no-news.png' %}";
+
+  // --- DOM elements ---
+  const loadingState = document.getElementById('loading-state');
+  const errorState = document.getElementById('error-state');
+  const emptyState = document.getElementById('empty-state');
+  const productCard = document.getElementById('product-card');
+
+  const elThumbnail = document.getElementById('product-thumbnail');
+  const elName = document.getElementById('product-name');
+  const elCategory = document.getElementById('product-category');
+  const elFeaturedBadge = document.getElementById('badge-featured');
+  const elPrice = document.getElementById('product-price');
+  const elStock = document.getElementById('product-stock');
+  const elBrandContainer = document.getElementById('product-brand');
+  const elBrandValue = document.getElementById('product-brand-value');
+  const elRatingContainer = document.getElementById('product-rating');
+  const elRatingValue = document.getElementById('product-rating-value');
+  const elDescription = document.getElementById('product-description');
+  const elAuthor = document.getElementById('product-author');
+
+  const btnAddToCart = document.getElementById('add-to-cart-btn');
+  const btnBuyNow = document.getElementById('buy-now-btn');
+
+  const errorRetryBtn = document.getElementById('error-retry-btn');
+  const emptyRetryBtn = document.getElementById('empty-retry-btn');
+
+  // attach retry button handlers
+  if (errorRetryBtn) errorRetryBtn.addEventListener('click', () => loadProductDetail());
+  if (emptyRetryBtn) emptyRetryBtn.addEventListener('click', () => loadProductDetail());
+
+  // --- state helper ---
+  function showState(state) {
+    loadingState.classList.toggle('hidden', state !== 'loading');
+    errorState.classList.toggle('hidden', state !== 'error');
+    emptyState.classList.toggle('hidden', state !== 'empty');
+    productCard.classList.toggle('hidden', state !== 'ready');
+  }
+
+  // --- small formatters ---
+  function toTitleCase(s) {
+    if (!s) return '';
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function formatCurrencyIDR(value) {
+    if (value == null || value === '') return '-';
+    const n = Number(value);
+    if (isNaN(n)) return value;
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+  }
+
+  // --- render product into DOM ---
+  function renderProduct(p) {
+
+    // Title and document title
+    elName.textContent = p.name || 'Untitled product';
+    document.title = `${p.name || 'Product'} - Product Detail`;
+
+    // Thumbnail
+    if (p.thumbnail) {
+      elThumbnail.src = p.thumbnail;
+      elThumbnail.alt = p.name || 'Product image';
+    } else {
+      elThumbnail.src = NO_IMAGE;
+      elThumbnail.alt = 'No image';
+    }
+
+    // Category
+    elCategory.textContent = toTitleCase(p.category || '');
+
+    // Featured badge
+    if (p.is_featured) {
+      elFeaturedBadge.classList.remove('hidden');
+    } else {
+      elFeaturedBadge.classList.add('hidden');
+    }
+
+    // Price
+    elPrice.innerHTML = `<b>Price:</b> ${formatCurrencyIDR(p.price)}`;
+
+    // Stock
+    const stockNum = (p.stock === null || p.stock === undefined) ? '-' : p.stock;
+    elStock.innerHTML = `<b>Stock:</b> ${stockNum}`;
+
+    // Brand
+    if (p.brand) {
+      elBrandContainer.classList.remove('hidden');
+      elBrandValue.textContent = p.brand;
+    } else {
+      elBrandContainer.classList.add('hidden');
+    }
+
+    // Rating
+    if (p.rating !== undefined && p.rating !== null && p.rating !== '') {
+      elRatingContainer.classList.remove('hidden');
+      elRatingValue.textContent = p.rating;
+    } else {
+      elRatingContainer.classList.add('hidden');
+    }
+
+    elDescription.textContent = p.description || '';
+
+    // Author
+    elAuthor.textContent = p.user_username || 'Anonymous';
+
+    // Buttons: enable/disable based on stock
+    const outOfStock = (Number(p.stock) === 0);
+    btnAddToCart.disabled = outOfStock;
+    btnBuyNow.disabled = outOfStock;
+    if (outOfStock) {
+      btnAddToCart.classList.add('opacity-50', 'cursor-not-allowed');
+      btnBuyNow.classList.add('opacity-50', 'cursor-not-allowed');
+      if (Number(p.stock) === 0) elStock.innerHTML = `<b>Stock:</b> Out of stock`;
+    } else {
+      btnAddToCart.classList.remove('opacity-50', 'cursor-not-allowed');
+      btnBuyNow.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    btnAddToCart.dataset.productId = p.id;
+    btnBuyNow.dataset.productId = p.id;
+
+    btnAddToCart.onclick = () => {
+      alert(`Add to cart: ${p.name}`);
+    };
+    btnBuyNow.onclick = () => {
+      alert(`Buy now: ${p.name}`);
+    };
+  }
+
+  // --- fetch product JSON and render ---
+  async function loadProductDetail() {
+    try {
+      showState('loading');
+
+      const resp = await fetch(PRODUCT_ENDPOINT, {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      });
+
+      if (!resp.ok) {
+        // Non-200
+        throw new Error(`Server returned ${resp.status}`);
+      }
+
+      const data = await resp.json();
+
+      const productData = data.product || data;
+
+      // Determine empty: null/undefined, empty object, or missing main fields
+      const isEmpty = (
+        !productData ||
+        (typeof productData === 'object' && Object.keys(productData).length === 0) ||
+        (!productData.id && !productData.name && !productData.description && !productData.thumbnail)
+      );
+
+      if (isEmpty) {
+        // show empty state (product not found)
+        showState('empty');
+        return;
+      }
+
+      renderProduct(productData);
+      showState('ready');
+    } catch (err) {
+      console.error('Error loading product detail:', err);
+      showState('error');
+    }
+  }
+
+  // Initialize
+  loadProductDetail();
+</script>
 {% endblock content %}

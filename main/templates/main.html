@@ -2,6 +2,7 @@
 {% load static %}
 {% block content %}
 {% include 'navbar.html' %}
+{% include 'modal.html' %} {# include modal here #}
 
 <main class="min-h-screen bg-slate-50 py-10 pt-16">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -17,125 +18,324 @@
         </div>
         <div class="hidden sm:flex items-center gap-4">
           <a href="{% url 'main:show_main' %}?filter=all"
-             class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium
-                    bg-[#7F8CAA] hover:bg-[#6f7fa0] text-white transition">
+             class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-[#7F8CAA] hover:bg-[#6f7fa0] text-white transition">
             All Products
           </a>
           <a href="{% url 'main:show_main' %}?filter=my"
-             class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium
-                    bg-white bg-opacity-10 hover:bg-opacity-20 text-white transition">
+             class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 text-white transition">
             My Products
           </a>
         </div>
       </div>
     </section>
 
-    <!-- MOBILE HERO ACTIONS (small screens) -->
-    <div class="sm:hidden flex items-center gap-3">
-      <a href="{% url 'main:show_main' %}?filter=all" class="px-3 py-2 rounded-md text-sm font-medium bg-[#7F8CAA] hover:bg-[#6f7fa0] text-white transition">All</a>
-    </div>
-
-    <!-- SEARCH BAR (di atas Featured) -->
+    <!-- SEARCH BAR -->
     <section class="mb-6">
-      <form action="{% url 'main:show_main' %}" method="get" class="max-w-lg mx-auto">
-        <!-- preserve current filter (all/my) saat mencari -->
+      <form id="searchForm" action="{% url 'main:show_main' %}" method="get" class="max-w-lg mx-auto">
         <input type="hidden" name="filter" value="{{ request.GET.filter|default:'all' }}">
-
+        <input type="hidden" name="category" value="{{ request.GET.category|default:'' }}">
         <div class="flex gap-2">
-          <input
-            type="search"
-            name="q"
-            value="{{ request.GET.q|default:'' }}"
-            placeholder="Cari produk (nama, kategori, deskripsi)..."
-            class="flex-1 px-4 py-2 rounded-md border border-[#7F8CAA] bg-white text-slate-900 placeholder-slate-400
-                  focus:outline-none focus:ring-2 focus:ring-[#7F8CAA] focus:border-[#5459AC] transition"
-          />
-          <button type="submit" class="px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">
-            Search
-          </button>
+          <input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Cari produk (nama, kategori, deskripsi)..." class="flex-1 px-4 py-2 rounded-md border border-[#7F8CAA] bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7F8CAA] focus:border-[#5459AC] transition" />
+          <button type="submit" class="px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">Search</button>
         </div>
       </form>
     </section>
 
-    <!-- FEATURED PRODUCTS -->
-    {% if featured_products %}
-    <section>
-      <h2 class="text-xl font-bold text-slate-800 mb-6">🔥 Featured Products</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {% for product in featured_products %}
-          <article class="bg-white rounded-3xl border-2 border-[#5459AC] shadow-xl overflow-hidden transform hover:scale-[1.02] transition">
-            {% if product.thumbnail %}
-              <div class="h-72 bg-slate-100 overflow-hidden">
-                <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-              </div>
-            {% else %}
-              <div class="h-72 bg-gradient-to-b from-[#5459AC]/10 to-[#7F8CAA]/6 flex items-center justify-center text-slate-400">
-                No image
-              </div>
-            {% endif %}
-            <div class="p-6 space-y-4">
-              <div class="flex items-center justify-between">
-                <h3 class="text-xl font-extrabold text-slate-900">
-                  <a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a>
-                </h3>
-                <span class="text-xs px-3 py-1 rounded-full bg-[#52357B] text-white font-semibold shadow">
-                  Featured
-                </span>
-              </div>
-              <p class="text-sm text-slate-500">{{ product.category|capfirst }}</p>
-              <p class="text-lg font-bold text-[#5459AC]">Rp{{ product.price }}</p>
-              <p class="text-sm text-slate-600">{{ product.description|truncatewords:25 }}</p>
-
-              <div class="mt-4 flex items-center gap-3">
-                <a href="{% url 'main:show_product' product.id %}" 
-                  class="px-5 py-2 rounded-md bg-[#5459AC] hover:bg-[#463f8f] text-white font-medium transition">
-                  View
-                </a>
-                {% if user.is_authenticated and product.user == user %}
-                  <a href="{% url 'main:edit_product' product.pk %}" 
-                    class="px-5 py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition">
-                    Edit
-                  </a>
-                {% endif %}
-              </div>
-            </div>
-          </article>
-        {% endfor %}
-      </div>
-    </section>
-    {% endif %}
-
-    {% if category %}
-    <h2 class="text-xl font-bold text-[#5459AC] mb-4 capitalize">{{ category }}</h2>
-    {% endif %}
-
-    <!-- PRODUCTS LIST / GRID -->
-    <section>
+    <!-- AJAX-only Products placeholder -->
+    <section id="products-section">
       <h2 class="text-lg font-semibold text-slate-800 mb-4">Products</h2>
 
-      {% if product_list %}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {% for product in product_list %}
-            {% include 'card_products.html' with product=product %}
-        {% endfor %}
-        </div>
-      {% else %}
-        <div class="rounded-lg p-6 bg-white border border-slate-100 text-slate-600 shadow-sm text-center">
-          <img src="{% static 'image/no-news.png' %}" alt="No Products Found" class="mx-auto w-40 h-40 object-contain mb-4">
-          <h3 class="text-lg font-semibold text-slate-900 mb-2">No Products Found</h3>
-          <p class="text-sm text-slate-500 mb-4">Be the first to add a product!</p>
-          {% if user.is_authenticated %}
-            <a href="{% url 'main:create_product' %}" 
-              class="inline-block px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">
-              Create Product
-            </a>
-          {% endif %}
+      {% if user.is_authenticated %}
+        <div class="flex justify-end mb-4">
+          <button onclick="showModal('create')" 
+            class="inline-flex items-center px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">
+            + Add Product
+          </button>
         </div>
       {% endif %}
 
+      <div class="flex justify-end mb-4">
+        <button id="refreshProductsBtn" class="px-4 py-2 bg-[#7F8CAA] text-white rounded hover:bg-blue-700">
+          Refresh Products
+        </button>
+      </div>
+
+      <div id="products-loading" class="bg-white rounded-lg p-8 border border-slate-100 text-center">
+        <svg class="animate-spin h-6 w-6 inline-block text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+        </svg>
+        <p class="mt-3 text-slate-600">Loading products...</p>
+      </div>
+
+      <div id="products-empty" class="hidden rounded-lg p-6 bg-white border border-slate-100 text-slate-600 shadow-sm text-center">
+        <img src="{% static 'image/no-news.png' %}" alt="No Products Found" class="mx-auto w-40 h-40 object-contain mb-4">
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">No Products Found</h3>
+        <p class="text-sm text-slate-500 mb-4">Be the first to add a product!</p>
+        {% if user.is_authenticated %}
+          <button onclick="showModal('create')" class="inline-block px-4 py-2 rounded-md bg-[#5459AC] hover:bg-[#52357B] text-white font-medium transition">Create Product</button>
+        {% endif %}
+      </div>
+
+      <div id="products-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+
+      <div id="products-error" class="hidden rounded-lg p-6 bg-white border border-slate-100 text-slate-600 shadow-sm text-center">
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">Failed to load products</h3>
+        <p class="text-sm text-slate-500 mb-4">Please try again later.</p>
+        <button id="products-retry" class="px-4 py-2 rounded-md bg-[#7F8CAA] text-white">Retry</button>
+      </div>
     </section>
 
   </div>
 </main>
+
+<script>
+(() => {
+function getProductsEndpoint() {  // 🔹
+  const params = new URLSearchParams(new FormData(searchForm));
+  params.set('ajax','1');  // pastikan ajax selalu 1
+  return "{% url 'main:show_json' %}?" + params.toString();
+}
+
+  /* Helpers */
+  function formatCurrency(v) {
+    try { return new Intl.NumberFormat('id-ID',{ style:'currency', currency:'IDR', maximumFractionDigits:0 }).format(Number(v)); }
+    catch (e) { return 'Rp' + v; }
+  }
+  function getCookie(name) {
+    const v = document.cookie.split('; ').find(x => x.trim().startsWith(name + '='));
+    return v ? decodeURIComponent(v.split('=')[1]) : null;
+  }
+
+  // UI elements
+  const loadingEl = document.getElementById('products-loading');
+  const emptyEl = document.getElementById('products-empty');
+  const gridEl = document.getElementById('products-grid');
+  const errorEl = document.getElementById('products-error');
+  const retryBtn = document.getElementById('products-retry');
+  const searchForm = document.getElementById('searchForm');
+
+    //pastikan klik pada link yang memiliki 'category=' meng-update form dan memanggil AJAX
+  (function wireCategoryLinks() {
+    // pilih anchor yang punya query param 'category=' pada href
+    const catLinks = Array.from(document.querySelectorAll('a[href*="category="]'));
+    if (!catLinks.length) return;
+
+    catLinks.forEach(a => {
+      a.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        try {
+          const url = new URL(this.href, location.origin);
+          const categoryValue = url.searchParams.get('category') || '';
+
+          // update hidden input pada form
+          if (searchForm) {
+            const catInp = searchForm.querySelector('input[name="category"]');
+            if (catInp) catInp.value = categoryValue;
+            const filtInp = searchForm.querySelector('input[name="filter"]');
+            // optional: jika link kategori juga mengandung filter param, update filter too
+            const filterValue = url.searchParams.get('filter');
+            if (filtInp && filterValue !== null) filtInp.value = filterValue;
+          }
+
+          // perbarui URL di address bar (opsional - UX)
+          history.pushState({}, '', url.pathname + url.search);
+
+          // panggil AJAX untuk load produk sesuai kategori
+          loadProducts(getProductsEndpoint());
+        } catch (err) {
+          // fallback: jika error, lakukan navigasi normal
+          console.error(err);
+          window.location.href = this.href;
+        }
+      });
+    });
+  })();
+
+  // show states
+  function showState(s) {
+    loadingEl.classList.toggle('hidden', s !== 'loading');
+    emptyEl.classList.toggle('hidden', s !== 'empty');
+    gridEl.classList.toggle('hidden', s !== 'ready');
+    errorEl.classList.toggle('hidden', s !== 'error');
+  }
+
+  // Build product card (JS-only)
+  function buildProductCard(product) {
+    const art = document.createElement('article');
+    art.className = 'bg-white rounded-3xl border shadow overflow-hidden flex flex-col';
+    if (product && product.id) art.setAttribute('data-product-id', product.id);
+
+    // thumbnail
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'h-56 bg-slate-100 overflow-hidden relative';
+    if (product.thumbnail) {
+      const img = document.createElement('img'); img.src = product.thumbnail; img.alt = product.name || 'Product'; img.className = 'w-full h-full object-cover'; thumbWrap.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div'); placeholder.className = 'w-full h-full flex items-center justify-center text-slate-400'; placeholder.textContent = 'No image'; thumbWrap.appendChild(placeholder);
+    }
+    art.appendChild(thumbWrap);
+
+    // body
+    const body = document.createElement('div'); body.className = 'p-5 flex flex-col gap-3 flex-1';
+
+    // title + badges
+    const header = document.createElement('div'); header.className = 'flex items-start justify-between gap-3';
+    const title = document.createElement('h3'); title.className = 'text-lg font-semibold text-slate-900';
+    const a = document.createElement('a'); a.href = product.detail_url || '#'; a.textContent = product.name || 'Unnamed Product'; a.className = 'hover:text-[#5459AC] transition';
+    title.appendChild(a); header.appendChild(title);
+
+    const badges = document.createElement('div'); badges.className = 'flex items-center gap-2';
+    if (product.is_featured) { const b = document.createElement('span'); b.className = 'text-xs px-2 py-0.5 bg-[#52357B] text-white rounded'; b.textContent = 'Featured'; badges.appendChild(b); }
+    if (product.stock === 0) { const s = document.createElement('span'); s.className = 'text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded'; s.textContent = 'Out of stock'; badges.appendChild(s); }
+    header.appendChild(badges);
+    body.appendChild(header);
+
+    // meta
+    const meta = document.createElement('div'); meta.className = 'flex items-center justify-between text-sm text-slate-500';
+    const cat = document.createElement('div'); cat.textContent = (product.category || 'Uncategorized').replace(/^\w/, c => c.toUpperCase()); meta.appendChild(cat);
+    const price = document.createElement('div'); price.className = 'text-[#5459AC] font-bold'; price.textContent = product.price != null ? formatCurrency(product.price) : '-'; meta.appendChild(price);
+    body.appendChild(meta);
+
+    // description
+    const desc = document.createElement('p'); desc.className = 'text-sm text-slate-600 line-clamp-3'; desc.textContent = product.description || ''; body.appendChild(desc);
+
+    // actions
+    const actions = document.createElement('div'); actions.className = 'mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3';
+    const leftGroup = document.createElement('div'); leftGroup.className = 'flex items-center gap-2';
+    const viewBtn = document.createElement('a'); viewBtn.href = product.detail_url || '#'; viewBtn.className = 'px-4 py-2 rounded-md bg-[#5459AC] text-white text-sm hover:bg-[#463f8f] transition'; viewBtn.textContent = 'View'; leftGroup.appendChild(viewBtn);
+
+    actions.appendChild(leftGroup);
+
+    // right group: edit / delete if owner
+    const rightGroup = document.createElement('div'); rightGroup.className = 'flex items-center gap-2';
+    if (product.is_owner) {
+      // Edit (open modal)
+      const editBtn = document.createElement('button'); editBtn.type = 'button'; editBtn.className = 'text-sm text-slate-700 border px-3 py-1 rounded'; editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', (ev) => { ev.preventDefault(); showModal('edit', product); });
+      rightGroup.appendChild(editBtn);
+
+      // Delete
+      const delBtn = document.createElement('button'); delBtn.type = 'button'; delBtn.className = 'text-sm text-red-600 border px-3 py-1 rounded'; delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        if (!confirm('Delete this product?')) return;
+        delBtn.disabled = true;
+        try {
+          const deleteUrl = product.delete_url || (`{% url 'main:delete_product' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', product.id));
+          const resp = await fetch(deleteUrl, {
+            method: 'POST', // adjust to DELETE if your backend supports it
+            headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+          });
+          if (!resp.ok) throw new Error('Delete failed');
+          // dispatch deleted event
+          window.dispatchEvent(new CustomEvent('product:deleted', { detail: { id: product.id } }));
+        } catch (err) {
+          console.error(err);
+          alert('Failed to delete product.');
+        } finally { delBtn.disabled = false; }
+      });
+      rightGroup.appendChild(delBtn);
+    }
+    actions.appendChild(rightGroup);
+
+    body.appendChild(actions);
+    art.appendChild(body);
+    return art;
+  }
+
+  // render products array into grid
+  function renderProducts(products) {
+    if (!Array.isArray(products) || products.length === 0) {
+      showState('empty'); return;
+    }
+    gridEl.innerHTML = '';
+    products.forEach(p => gridEl.appendChild(buildProductCard(p)));
+    showState('ready');
+  }
+
+  // fetch JSON
+  async function fetchProducts(url) {
+    try {
+      showState('loading');
+      const resp = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With':'XMLHttpRequest' }, credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('Bad response');
+      const data = await resp.json();
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
+
+  // Initial load & helpers
+  async function loadProducts(url) {
+    try {
+      const products = await fetchProducts(url);
+      renderProducts(products);
+    } catch (err) {
+      showState('error');
+    }
+  }
+
+  // wire retry button & search form
+  if (retryBtn) retryBtn.addEventListener('click', () => loadProducts(getProductsEndpoint()));
+  if (searchForm) {
+    searchForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      const params = new URLSearchParams(new FormData(searchForm)).toString();
+      const url = (searchForm.action || window.location.pathname) + (params ? ('?' + params + '&ajax=1') : '?ajax=1');
+      loadProducts(url).then(() => history.pushState({}, '', (new URL(url, location.origin)).pathname + (new URL(url, location.origin)).search.replace(/&?ajax=1/,'') )).catch(()=>{});
+    });
+  }
+
+  // Listen for modal upsert/delete events to update DOM without reload
+  window.addEventListener('product:upsert', function (ev) {
+    try {
+      const detail = ev.detail || {};
+      const product = detail.product;
+      if (!product) {
+        // safe fallback: reload products list
+        loadProducts(getProductsEndpoint());
+        return;
+      }
+      // find grid item
+      const existing = gridEl.querySelector(`[data-product-id="${product.id}"]`);
+      const newCard = buildProductCard(product);
+      if (existing) {
+        existing.replaceWith(newCard);
+        newCard.classList.add('ring','ring-green-300');
+        setTimeout(()=> newCard.classList.remove('ring','ring-green-300'), 1200);
+      } else {
+        // add to top
+        gridEl.insertBefore(newCard, gridEl.firstChild);
+        if (emptyEl && !emptyEl.classList.contains('hidden')) emptyEl.classList.add('hidden');
+        if (gridEl.classList.contains('hidden')) gridEl.classList.remove('hidden');
+        newCard.classList.add('ring','ring-blue-300');
+        setTimeout(()=> newCard.classList.remove('ring','ring-blue-300'), 1200);
+      }
+    } catch (err) { console.error(err); loadProducts(getProductsEndpoint()); }
+  });
+
+  window.addEventListener('product:deleted', function (ev) {
+    try {
+      const id = ev.detail && ev.detail.id;
+      if (!id) return;
+      const node = gridEl.querySelector(`[data-product-id="${id}"]`);
+      if (node) node.remove();
+      if (gridEl.children.length === 0) loadProducts(getProductsEndpoint());
+    } catch (err) { console.error(err); }
+  });
+
+  // Tombol refresh manual
+document.getElementById('refreshProductsBtn')?.addEventListener('click', () => {
+  loadProducts(getProductsEndpoint());
+});
+
+  // initial
+  loadProducts(getProductsEndpoint());
+})();
+</script>
+
 {% endblock content %}

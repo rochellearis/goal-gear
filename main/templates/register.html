@@ -42,7 +42,7 @@
           </div>
         {% endif %}
 
-        <form method="POST" action="" class="space-y-5" novalidate>
+        <form id="registerForm" method="POST" novalidate>
           {% csrf_token %}
 
           <div>
@@ -119,4 +119,57 @@
     </div>
   </div>
 </div>
+
+<script>
+function getCookie(name) {
+  const v = document.cookie.split('; ').find(x => x.startsWith(name + '='));
+  return v ? decodeURIComponent(v.split('=')[1]) : null;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('registerForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); // cegah reload halaman
+
+    const fd = new FormData(form);
+    try {
+      const resp = await fetch("{% url 'main:register' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest' // menandakan AJAX
+        },
+        body: fd
+      });
+
+      if (!resp.ok) throw new Error('Server error');
+      const data = await resp.json();
+
+      // handle response
+      if (data.success) {
+        showToast('Register berhasil!', '', 'success');
+        setTimeout(() => { window.location.href = data.redirect_url; }, 1000);
+      } else {
+        showToast(data.error || 'Register gagal', '', 'error');
+      }
+
+    } catch (err) {
+      console.error(err);
+      showToast('Terjadi kesalahan server', '', 'error');
+    }
+  });
+});
+
+// Toast helper
+function showToast(msg, title='', type='info') {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow text-white ${
+    type==='success'?'bg-green-500': type==='error'?'bg-red-500':'bg-gray-700'
+  }`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+</script>
+
 {% endblock content %}

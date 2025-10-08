@@ -40,15 +40,18 @@
            class="px-3 py-1.5 rounded-md bg-[#5459AC] hover:bg-[#463f8f] text-white text-sm transition">
           View
         </a>
-        {% if user.is_authenticated and product.user == user %}
-          <a href="{% url 'main:edit_product' product.pk %}" 
-             class="px-3 py-1.5 rounded-md border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 transition">
-            Edit
-          </a>
-          <a href="{% url 'main:delete_product' product.pk %}" 
-             class="px-3 py-1.5 rounded-md bg-[#52357B] hover:bg-[#42285f] text-white text-sm transition">
-            Delete
-          </a>
+        {% if user.is_authenticated and product.user_id == user.id %}
+          <button type="button"
+                  onclick="showModal('edit', {id:'{{ product.pk }}', name:'{{ product.name|escapejs }}'})"
+                  class="px-3 py-1.5 rounded-md border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 transition">
+              Edit
+          </button>
+          <button 
+              type="button"
+              onclick="showDeleteModal({id:'{{ product.pk }}', name:'{{ product.name|escapejs }}'})"
+              class="px-3 py-1.5 rounded-md bg-[#52357B] hover:bg-[#42285f] text-white text-sm transition">
+              Delete
+          </button>
         {% endif %}
       </div>
     </div>
